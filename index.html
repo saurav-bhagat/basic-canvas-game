@@ -1,0 +1,162 @@
+<!Doctype html>
+<html>
+<head>
+	<title>Canvas Game</title>
+</head>
+<body>
+	<h1>Learning canvas</h1>
+	<canvas id="gameCanvas" width="800" height="600">
+
+	</canvas>
+	<script type="text/javascript">
+		var canvas; //global
+		var canvasContext;
+		var ballX = 50;
+		var ballY = 50;
+		var ballSpeedX = 5;
+		var ballSpeedY = 10;
+
+		var paddle1Y = 250;
+		var paddle2Y = 250;
+		const PADDLE_HEIGHT = 100;
+		const PADDLE_THICKNESS = 10;
+
+		var player1Score = 0;
+		var player2Score = 0;
+		const WINNING_SCORE = 3;
+
+		window.onload = function() {
+			canvas = document.getElementById("gameCanvas");
+			canvasContext = canvas.getContext('2d');
+			
+
+			var framesPerSecond = 30;
+			setInterval(callBoth,1000/framesPerSecond);
+
+			canvas.addEventListener('mousemove', function(evt){
+				var mousePos = calculateMousePos(evt);
+				paddle1Y = mousePos.y+(PADDLE_HEIGHT/2);
+			});
+		}
+		function callBoth(){
+			drawEverything();
+			moveEverything();
+		}
+
+		function drawNet(){
+			for(var i=0; i< canvas.height ; i+=40)
+			{
+				colorRect(canvas.width/2-1, i ,2,20,'white');
+			}
+		}
+
+		function drawEverything(){
+			//this line blanksout thescreen with black
+			colorRect(0,0,canvas.width,canvas.height, 'black');
+
+			drawNet();
+			//this is left player padle
+			colorRect(0,paddle1Y,PADDLE_THICKNESS,PADDLE_HEIGHT,'white');
+			//right paddle
+			colorRect(canvas.width-PADDLE_THICKNESS,paddle2Y,PADDLE_THICKNESS,PADDLE_HEIGHT,'white');
+			//next lie draws the ball
+			// colorRect(ballX,100,10,10,'red');
+			colorCircle(ballX, ballY, 10, 'white');
+
+			//show score
+			canvasContext.fillText(player1Score, 50,50);
+			canvasContext.fillText(player2Score, canvas.width-50,50);
+
+		}
+
+		function computerMovement(){
+			//automatically move right paddle to align with the ball
+			//algn the center
+			var paddle2YCenter = paddle2Y + (PADDLE_HEIGHT/2);
+			if(ballY>paddle2YCenter +35){
+				paddle2Y += 6;
+			} else if(ballY<paddle2YCenter -35) {
+				paddle2Y -= 6;
+			}
+		}
+		function moveEverything(){
+			computerMovement();
+
+			//will change the x cords of ball handling corners 
+			ballX = ballX + ballSpeedX;
+			ballY = ballY + ballSpeedY;
+			//hangle corners 
+			if(ballX > canvas.width){
+				if(ballY>paddle2Y && ballY<paddle2Y+ PADDLE_HEIGHT){
+					//when ball touches paddle we want to move the ball in such a way that ball angle is expected
+					//if it touches middle, move straight center
+					ballSpeedX = -ballSpeedX;
+					var deltaY = ballY- ( paddle2Y + (PADDLE_HEIGHT/2) );
+					ballSpeedY = deltaY*0.35;
+				}else{
+					player1Score++;
+					ballReset();
+				}
+			}
+			if(ballX <=0 ){
+
+				//check if ball is touching the paddle
+				if(ballY>paddle1Y && ballY<paddle1Y+ PADDLE_HEIGHT){
+					ballSpeedX = -ballSpeedX;
+					var deltaY = ballY- ( paddle1Y + (PADDLE_HEIGHT/2) );
+					ballSpeedY = deltaY*0.35;
+				}else{
+					//score update must be beofre call reset
+					player2Score++;
+					ballReset();
+				}
+				// ballSpeedX = -ballSpeedX;
+			}
+			if(ballY > canvas.height){
+				ballSpeedY = -ballSpeedY;
+			}
+			if(ballY <=0 ){
+				ballSpeedY = -ballSpeedY;
+			}
+		}
+
+		function colorRect(leftX, topY,width, height,drawColor)
+		{
+			//function to draw canvas
+			canvasContext.fillStyle = drawColor;
+			canvasContext.fillRect(leftX,topY,width, height);
+		}
+		function colorCircle(centerX, centerY, radius, drawColor) {
+			canvasContext.fillStyle=drawColor;
+			canvasContext.beginPath();
+			canvasContext.arc(centerX,centerY,radius,0,Math.PI*2, true);
+			canvasContext.fill();
+		}
+
+		function calculateMousePos(evt) {
+			var rect = canvas.getBoundingClientRect();
+			var root = document.documentElement;
+			var mouseX = evt.clientX - rect.left - root.scrollLeft;
+			var mouseY = evt.clientY - rect.top - root.scrollTop;
+			return {
+				x : mouseX,
+				y: mouseY
+			}
+
+		}
+
+		function ballReset(){
+			if(player1Score >= WINNING_SCORE || player2Score>= WINNING_SCORE){
+				
+				var winText = player1Score >= 3 ? "You win!! Yee" : "Opps! Better luck next time";
+				player2Score = 0;
+				player1Score = 0;
+				alert(winText);
+			}
+			ballSpeedX = -ballSpeedX;// to change its direction after reset
+			ballX = canvas.width/2;
+			ballY = canvas.height/2;
+		}
+	</script>
+</body>
+</html>
